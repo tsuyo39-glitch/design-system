@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { TokenDocument } from '../model/dtcg'
 import { parseDocument } from '../model/io'
+import { setTokenValue } from '../model/resolve'
 import sampleDocument from '../../design-system/tokens.json'
 
 interface DocumentState {
@@ -12,6 +13,7 @@ interface DocumentState {
   newDocument: () => void
   importDocument: (json: string) => void
   select: (path: string | null) => void
+  setValue: (path: string, value: unknown) => void
 }
 
 export const useDocumentStore = create<DocumentState>((set) => ({
@@ -21,4 +23,5 @@ export const useDocumentStore = create<DocumentState>((set) => ({
   newDocument: () => set({ document: {}, selectedPath: null }),
   importDocument: (json) => set({ document: parseDocument(json), selectedPath: null }),
   select: (path) => set({ selectedPath: path }),
+  setValue: (path, value) => set((state) => ({ document: setTokenValue(state.document, path, value) })),
 }))

@@ -3,7 +3,7 @@ import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { TokenDocument } from './dtcg'
-import { resolveRef, resolveToken, resolveType } from './resolve'
+import { getToken, resolveRef, resolveToken, resolveType, setTokenValue } from './resolve'
 
 describe('resolveToken', () => {
   it('参照を辿らず $value をそのまま返す', () => {
@@ -112,6 +112,44 @@ describe('resolveType', () => {
       },
     }
     expect(resolveType(doc, 'component.button.radius')).toBe('dimension')
+  })
+})
+
+describe('getToken', () => {
+  it('パス上のトークンを解決せずそのまま返す', () => {
+    const doc: TokenDocument = {
+      semantic: { action: { $value: '{color.indigo.500}', $type: 'color' } },
+    }
+    expect(getToken(doc, 'semantic.action').$value).toBe('{color.indigo.500}')
+  })
+
+  it('Group を指すパスはエラーを投げる', () => {
+    const doc: TokenDocument = { color: { $type: 'color', brand: { $value: '#6366F1' } } }
+    expect(() => getToken(doc, 'color')).toThrow()
+  })
+})
+
+describe('setTokenValue', () => {
+  it('パス上のトークンの $value だけを差し替えた新しいドキュメントを返す', () => {
+    const doc: TokenDocument = {
+      color: {
+        $type: 'color',
+        brand: { $value: '#6366F1', $description: '説明' },
+        other: { $value: '#000000' },
+      },
+    }
+    const updated = setTokenValue(doc, 'color.brand', '#FF0000')
+
+    expect(getToken(updated, 'color.brand').$value).toBe('#FF0000')
+    expect(getToken(updated, 'color.brand').$description).toBe('説明')
+    expect(getToken(updated, 'color.other').$value).toBe('#000000')
+    // 元のドキュメントはイミュータブルに保たれる
+    expect(getToken(doc, 'color.brand').$value).toBe('#6366F1')
+  })
+
+  it('存在しないパスはエラーを投げる', () => {
+    const doc: TokenDocument = { color: { $type: 'color', brand: { $value: '#6366F1' } } }
+    expect(() => setTokenValue(doc, 'color.missing', '#000000')).toThrow()
   })
 })
 

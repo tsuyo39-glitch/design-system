@@ -1,12 +1,11 @@
 import { useEffect, useState } from 'react'
+import { TokenEditor } from './features/token-editor/TokenEditor'
 import { TokenList } from './features/token-list/TokenList'
-import { useDocumentStore } from './store/documentStore'
 
 type Mode = 'light' | 'dark'
 
 function App() {
   const [mode, setMode] = useState<Mode>('light')
-  const selectedPath = useDocumentStore((s) => s.selectedPath)
 
   useEffect(() => {
     document.documentElement.dataset.mode = mode
@@ -29,15 +28,7 @@ function App() {
           <TokenList />
         </aside>
         <main className="flex-1 overflow-y-auto p-6">
-          <p className="text-ink-muted">
-            {selectedPath ? (
-              <>
-                選択中: <span className="font-mono text-ink">{selectedPath}</span>
-              </>
-            ) : (
-              '左のトークン一覧から選択してください。'
-            )}
-          </p>
+          <TokenEditor />
         </main>
       </div>
     </div>

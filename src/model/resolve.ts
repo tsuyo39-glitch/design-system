@@ -81,3 +81,39 @@ export function resolveType(doc: TokenDocument, path: string): TokenType {
   }
   return inherited
 }
+
+/** パス上のトークンを（解決せず）そのまま取得する。エディタが宣言値・参照有無を見るために使う。 */
+export function getToken(doc: TokenDocument, path: string): Token {
+  const node = getNode(doc, path)
+  if (!isToken(node)) {
+    throw new Error(`グループはトークンではありません: ${path}`)
+  }
+  return node
+}
+
+/** パス上のトークンの $value を差し替えた新しいドキュメントを返す（イミュータブル）。 */
+export function setTokenValue(doc: TokenDocument, path: string, value: unknown): TokenDocument {
+  const keys = path.split('.')
+
+  function recur(node: Group, index: number): Group {
+    const key = keys[index]
+    const child = node[key]
+    if (typeof child !== 'object' || child === null) {
+      throw new Error(`トークンが見つかりません: ${path}`)
+    }
+
+    if (index === keys.length - 1) {
+      if (!isToken(child as Group | Token)) {
+        throw new Error(`グループはトークンではありません: ${path}`)
+      }
+      return { ...node, [key]: { ...(child as Token), $value: value } }
+    }
+
+    if (isToken(child as Group | Token)) {
+      throw new Error(`トークンが見つかりません: ${path}`)
+    }
+    return { ...node, [key]: recur(child as Group, index + 1) }
+  }
+
+  return recur(doc, 0)
+}

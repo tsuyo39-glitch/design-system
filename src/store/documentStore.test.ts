@@ -50,4 +50,13 @@ describe('useDocumentStore', () => {
     useDocumentStore.getState().loadSample()
     expect(useDocumentStore.getState().selectedPath).toBeNull()
   })
+
+  it('setValue() で該当トークンの $value だけを更新する', () => {
+    useDocumentStore.getState().setValue('color.neutral.0', '#FF0000')
+    const doc = useDocumentStore.getState().document as {
+      color: { neutral: { 0: { $value: string }; 50: { $value: string } } }
+    }
+    expect(doc.color.neutral[0].$value).toBe('#FF0000')
+    expect(doc.color.neutral[50].$value).toBe('#F7F8FA')
+  })
 })
