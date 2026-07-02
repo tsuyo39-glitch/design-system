@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { TokenEditor } from './features/token-editor/TokenEditor'
 import { TokenList } from './features/token-list/TokenList'
-
-type Mode = 'light' | 'dark'
+import { Preview } from './features/preview/Preview'
+import type { Mode } from './model/resolve'
 
 function App() {
   const [mode, setMode] = useState<Mode>('light')
@@ -27,8 +27,11 @@ function App() {
         <aside className="w-72 shrink-0 overflow-y-auto border-r border-border p-2">
           <TokenList />
         </aside>
-        <main className="flex-1 overflow-y-auto p-6">
+        <section className="w-96 shrink-0 overflow-y-auto border-r border-border p-6">
           <TokenEditor />
+        </section>
+        <main className="flex-1 overflow-y-auto p-6">
+          <Preview mode={mode} />
         </main>
       </div>
     </div>
