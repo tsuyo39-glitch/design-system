@@ -16,9 +16,25 @@
   --color-accent-subtle: var(--semantic-color-action-subtle);
   --color-on-accent: var(--semantic-color-text-onAccent);
   --color-border: var(--semantic-color-border-default);
+  --color-focus: var(--semantic-color-focus-ring);
   --color-error: var(--semantic-color-status-error);
+
+  --font-mono: var(--fontFamily-mono);
 }
 
 body {
   font-family: var(--fontFamily-sans);
+}
+
+/* focus は必ず可視化する（design-principles §2.5 / §7）。ポインタ操作では出さない。 */
+@layer base {
+  :where(button, input, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 var(--borderWidth-thick) var(--semantic-color-focus-ring);
+  }
+
+  /* プレビュー内はユーザートークンで自前描画する領域なので chrome の focus を漏らさない。 */
+  .ds-preview :where(button, input, [tabindex]):focus-visible {
+    box-shadow: none;
+  }
 }

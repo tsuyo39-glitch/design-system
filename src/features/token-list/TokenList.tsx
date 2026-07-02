@@ -57,7 +57,7 @@ function TokenRow({ path, node, doc, depth }: TokenRowProps) {
             style={{ backgroundColor: swatch }}
           />
         )}
-        <span className="truncate">{name}</span>
+        <span className="truncate font-mono">{name}</span>
         <span className="ml-auto shrink-0 rounded border border-border px-1 font-mono text-xs text-ink-muted">
           {type}
         </span>
@@ -87,7 +87,7 @@ export function TokenList() {
   const entries = Object.entries(document).filter(([key]) => !isMetaKey(key))
 
   return (
-    <nav aria-label="トークン一覧" className="flex flex-col gap-0.5">
+    <nav aria-label="トークン一覧" className="flex flex-col">
       {entries.map(([key, child]) => (
         <TokenRow key={key} path={[key]} node={child as Group | Token} doc={document} depth={0} />
       ))}

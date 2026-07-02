@@ -95,7 +95,7 @@ export function Preview({ mode }: { mode: Mode }) {
   return (
     <div
       style={{ backgroundColor: canvas, color: textPrimary, borderColor: border }}
-      className="flex flex-col gap-6 rounded-xl border p-6"
+      className="ds-preview flex flex-col gap-6 rounded-xl border p-6"
     >
       <section>
         <h3 style={{ color: textSecondary }} className="mb-2 text-xs font-medium uppercase">
