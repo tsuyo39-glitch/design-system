@@ -2,10 +2,15 @@ import { isToken, type Group, type Token, type TokenDocument, type TokenType } f
 
 export type Mode = 'light' | 'dark'
 
+/** own プロパティのみを見る。プロトタイプ由来のキー（toString 等）を経路として誤解決しないため。 */
+function hasOwn(obj: object, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(obj, key)
+}
+
 function getNode(doc: TokenDocument, path: string): Group | Token {
   let cursor: Group | Token = doc
   for (const key of path.split('.')) {
-    if (isToken(cursor) || !(key in cursor)) {
+    if (isToken(cursor) || !hasOwn(cursor, key)) {
       throw new Error(`トークンが見つかりません: ${path}`)
     }
     cursor = cursor[key] as Group | Token
@@ -70,7 +75,7 @@ export function resolveType(doc: TokenDocument, path: string): TokenType {
   let cursor: Group | Token = doc
   let inherited = doc.$type
   for (const key of path.split('.')) {
-    if (isToken(cursor) || !(key in cursor)) {
+    if (isToken(cursor) || !hasOwn(cursor, key)) {
       throw new Error(`トークンが見つかりません: ${path}`)
     }
     cursor = cursor[key] as Group | Token
@@ -97,7 +102,7 @@ export function setTokenValue(doc: TokenDocument, path: string, value: unknown):
 
   function recur(node: Group, index: number): Group {
     const key = keys[index]
-    const child = node[key]
+    const child = hasOwn(node, key) ? node[key] : undefined
     if (typeof child !== 'object' || child === null) {
       throw new Error(`トークンが見つかりません: ${path}`)
     }

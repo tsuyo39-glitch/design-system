@@ -24,14 +24,15 @@ interface TokenRowProps {
 }
 
 function TokenRow({ path, node, doc, depth }: TokenRowProps) {
-  const selectedPath = useDocumentStore((s) => s.selectedPath)
+  const fullPath = path.join('.')
+  // 「自分が選択中か」だけを購読する。selectedPath 全体を購読すると、
+  // どのトークンを選んでも全 TokenRow が再レンダーされてしまうため。
+  const isSelected = useDocumentStore((s) => s.selectedPath === fullPath)
   const select = useDocumentStore((s) => s.select)
   const name = path[path.length - 1]
-  const fullPath = path.join('.')
   const indent = { paddingLeft: `${depth * 16 + 8}px` }
 
   if (isToken(node)) {
-    const isSelected = selectedPath === fullPath
     let type: string
     try {
       type = resolveType(doc, fullPath)

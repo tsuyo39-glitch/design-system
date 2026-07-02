@@ -26,9 +26,8 @@ type TokenType =
   | 'shadow'
   | 'typography'
 
-// biome-ignore-start: DTCG ツリーは動的な形なので unknown ベースで扱う
+// DTCG ツリーは動的な形なので unknown ベースで扱う
 type Node = { [key: string]: unknown }
-// biome-ignore-end
 
 const isToken = (node: Node): boolean => '$value' in node
 const isMetaKey = (key: string): boolean => key.startsWith('$')

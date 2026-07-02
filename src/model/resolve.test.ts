@@ -86,6 +86,14 @@ describe('resolveToken', () => {
     }
     expect(() => resolveToken(doc, 'color')).toThrow()
   })
+
+  it('プロトタイプ由来のキー（toString 等）は経路として解決しない', () => {
+    const doc: TokenDocument = {
+      color: { $type: 'color', brand: { $value: '#6366F1' } },
+    }
+    expect(() => resolveToken(doc, 'color.toString')).toThrow(/見つかりません/)
+    expect(() => resolveRef(doc, '{constructor}')).toThrow(/見つかりません/)
+  })
 })
 
 describe('resolveRef', () => {
