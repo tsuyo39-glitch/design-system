@@ -4,7 +4,23 @@ import { fileURLToPath } from 'node:url'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { TokenDocument } from '../../model/dtcg'
 import { parseDocument, serializeDocument } from '../../model/io'
-import { downloadDocument } from './exportDocument'
+import { downloadCss, downloadDocument } from './exportDocument'
+
+function captureDownload(run: () => void): { blob: Blob; clicked: number; revoked: boolean } {
+  let blob: Blob | null = null
+  let revoked = false
+  const createObjectURL = vi.fn((b: Blob) => {
+    blob = b
+    return 'blob:mock'
+  })
+  const revokeObjectURL = vi.fn(() => {
+    revoked = true
+  })
+  vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL })
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+  run()
+  return { blob: blob!, clicked: click.mock.calls.length, revoked }
+}
 
 describe('downloadDocument', () => {
   afterEach(() => {
@@ -13,22 +29,26 @@ describe('downloadDocument', () => {
 
   it('ドキュメントを JSON Blob にして a[download] 経由でダウンロードさせる', () => {
     const doc: TokenDocument = { color: { $type: 'color', brand: { $value: '#6366F1' } } }
+    const { blob, clicked, revoked } = captureDownload(() => downloadDocument(doc, 'my-tokens.json'))
 
-    let capturedBlob: Blob | null = null
-    const createObjectURL = vi.fn((blob: Blob) => {
-      capturedBlob = blob
-      return 'blob:mock'
-    })
-    const revokeObjectURL = vi.fn()
-    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL })
-    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    expect(blob.type).toBe('application/json')
+    expect(clicked).toBe(1)
+    expect(revoked).toBe(true)
+  })
+})
 
-    downloadDocument(doc, 'my-tokens.json')
+describe('downloadCss', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
 
-    expect(createObjectURL).toHaveBeenCalledOnce()
-    expect(capturedBlob!.type).toBe('application/json')
-    expect(click).toHaveBeenCalledOnce()
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock')
+  it('解決済み CSS を text/css Blob にしてダウンロードさせる', async () => {
+    const doc: TokenDocument = { color: { $type: 'color', brand: { $value: '#6366F1' } } }
+    const { blob, clicked } = captureDownload(() => downloadCss(doc))
+
+    expect(blob.type).toBe('text/css')
+    expect(clicked).toBe(1)
+    expect(await blob.text()).toContain('--color-brand: #6366F1;')
   })
 })
 

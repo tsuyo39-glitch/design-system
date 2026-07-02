@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { downloadDocument } from './features/export/exportDocument'
+import { downloadCss, downloadDocument } from './features/export/exportDocument'
 import { TokenEditor } from './features/token-editor/TokenEditor'
 import { TokenList } from './features/token-list/TokenList'
 import { Preview } from './features/preview/Preview'
@@ -59,10 +59,17 @@ function App() {
           />
           <button
             type="button"
+            onClick={() => downloadCss(useDocumentStore.getState().document)}
+            className={secondaryButton}
+          >
+            Export CSS
+          </button>
+          <button
+            type="button"
             onClick={() => downloadDocument(useDocumentStore.getState().document)}
             className="rounded-md bg-accent px-3 py-2 text-sm text-on-accent hover:bg-accent-hover"
           >
-            Export
+            Export JSON
           </button>
           <button
             type="button"
