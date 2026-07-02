@@ -3,6 +3,7 @@ import { defaultValueFor } from '../../model/defaults'
 import { isToken, type TokenType } from '../../model/dtcg'
 import { findNode, getToken, resolveType } from '../../model/resolve'
 import { useDocumentStore } from '../../store/documentStore'
+import { ColorWheel } from './ColorWheel'
 
 const REF_PATTERN = /^\{(.+)\}$/
 
@@ -28,23 +29,23 @@ function RefInput({ value, onChange }: { value: string; onChange: (value: string
 }
 
 function ColorInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
-  const hex = /^#[0-9a-fA-F]{6}$/.test(value) ? value : '#000000'
   return (
-    <div className="flex items-center gap-2">
-      <input
-        type="color"
-        aria-label="カラーピッカー"
-        value={hex}
-        onChange={(e) => onChange(e.target.value)}
-        className="h-9 w-9 shrink-0 rounded border border-border"
-      />
-      <input
-        type="text"
-        aria-label="HEX値"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
-      />
+    <div className="flex flex-col gap-3">
+      <ColorWheel value={value} onChange={onChange} />
+      <div className="flex items-center gap-2">
+        <span
+          aria-hidden
+          className="h-9 w-9 shrink-0 rounded-md border border-border"
+          style={{ backgroundColor: value }}
+        />
+        <input
+          type="text"
+          aria-label="HEX値"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className="flex-1 rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
+        />
+      </div>
     </div>
   )
 }

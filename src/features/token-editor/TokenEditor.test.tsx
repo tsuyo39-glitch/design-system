@@ -13,11 +13,12 @@ describe('TokenEditor', () => {
     expect(screen.getByText('左のトークン一覧から選択してください。')).toBeInTheDocument()
   })
 
-  it('color トークンを選択すると HEX 入力とカラーピッカーを表示する', () => {
+  it('color トークンを選択すると HEX 入力と色相環を表示する', () => {
     useDocumentStore.getState().select('color.neutral.0')
     render(<TokenEditor />)
-    const hexInput = screen.getByLabelText('HEX値')
-    expect(hexInput).toBeInTheDocument()
+    expect(screen.getByLabelText('HEX値')).toBeInTheDocument()
+    expect(screen.getByRole('slider', { name: '色相' })).toBeInTheDocument()
+    expect(screen.getByRole('slider', { name: '彩度と明度' })).toBeInTheDocument()
   })
 
   it('HEX 入力を変更するとストアの $value が更新される', () => {
