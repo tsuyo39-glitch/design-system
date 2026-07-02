@@ -59,4 +59,34 @@ describe('useDocumentStore', () => {
     expect(doc.color.neutral[0].$value).toBe('#FF0000')
     expect(doc.color.neutral[50].$value).toBe('#F7F8FA')
   })
+
+  it('addToken() でトークンを追加し、そのパスを選択状態にする', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.brand', 'color')
+    const state = useDocumentStore.getState()
+    expect(state.selectedPath).toBe('color.brand')
+    const doc = state.document as { color: { brand: { $value: string } } }
+    expect(doc.color.brand.$value).toBe('#000000')
+  })
+
+  it('removeNode() で削除し、その子孫を選択中だったら選択を外す', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.brand', 'color')
+    expect(useDocumentStore.getState().selectedPath).toBe('color.brand')
+
+    useDocumentStore.getState().removeNode('color')
+    const state = useDocumentStore.getState()
+    expect('color' in state.document).toBe(false)
+    expect(state.selectedPath).toBeNull()
+  })
+
+  it('removeNode() で無関係なトークンを消しても選択は保持される', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.a', 'color')
+    useDocumentStore.getState().addToken('color.b', 'color')
+    useDocumentStore.getState().select('color.a')
+
+    useDocumentStore.getState().removeNode('color.b')
+    expect(useDocumentStore.getState().selectedPath).toBe('color.a')
+  })
 })

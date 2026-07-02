@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { defaultValueFor } from '../../model/defaults'
 import type { TokenType } from '../../model/dtcg'
 import { getToken, resolveType } from '../../model/resolve'
 import { useDocumentStore } from '../../store/documentStore'
@@ -10,28 +11,7 @@ function isRef(value: unknown): value is string {
 }
 
 function defaultLiteralFor(type: TokenType | '?'): unknown {
-  switch (type) {
-    case 'color':
-      return '#000000'
-    case 'dimension':
-      return '0px'
-    case 'fontFamily':
-      return []
-    case 'fontWeight':
-      return 400
-    case 'number':
-      return 0
-    case 'duration':
-      return '0ms'
-    case 'cubicBezier':
-      return [0, 0, 1, 1]
-    case 'shadow':
-      return { color: '#00000000', offsetX: '0px', offsetY: '0px', blur: '0px', spread: '0px' }
-    case 'typography':
-      return {}
-    default:
-      return null
-  }
+  return type === '?' ? null : defaultValueFor(type)
 }
 
 function RefInput({ value, onChange }: { value: string; onChange: (value: string) => void }) {
@@ -190,6 +170,9 @@ export function TokenEditor() {
   const selectedPath = useDocumentStore((s) => s.selectedPath)
   const document = useDocumentStore((s) => s.document)
   const setValue = useDocumentStore((s) => s.setValue)
+  const removeNode = useDocumentStore((s) => s.removeNode)
+  // 削除の確認中パス。selectedPath と一致するときだけ確認 UI を出すので、別トークンを選ぶと自然に解除される。
+  const [confirmingPath, setConfirmingPath] = useState<string | null>(null)
 
   if (!selectedPath) {
     return <p className="text-ink-muted">左のトークン一覧から選択してください。</p>
@@ -227,6 +210,39 @@ export function TokenEditor() {
       ) : (
         <LiteralInput type={type} value={value} onChange={(v) => setValue(selectedPath, v)} />
       )}
+
+      <div className="border-t border-border pt-4">
+        {confirmingPath === selectedPath ? (
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-error">削除しますか？</span>
+            <button
+              type="button"
+              onClick={() => {
+                removeNode(selectedPath)
+                setConfirmingPath(null)
+              }}
+              className="rounded-md border border-error px-3 py-1 text-sm text-error hover:bg-surface"
+            >
+              削除する
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmingPath(null)}
+              className="rounded-md border border-border px-3 py-1 text-sm text-ink hover:bg-surface"
+            >
+              キャンセル
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setConfirmingPath(selectedPath)}
+            className="rounded-md border border-border px-3 py-1 text-sm text-ink-muted hover:bg-surface"
+          >
+            このトークンを削除
+          </button>
+        )}
+      </div>
     </div>
   )
 }

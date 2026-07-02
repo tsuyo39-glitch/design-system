@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { downloadCss, downloadDocument } from './features/export/exportDocument'
 import { TokenEditor } from './features/token-editor/TokenEditor'
+import { AddToken } from './features/token-list/AddToken'
 import { TokenList } from './features/token-list/TokenList'
 import { Preview } from './features/preview/Preview'
 import type { Mode } from './model/resolve'
@@ -81,8 +82,11 @@ function App() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 shrink-0 overflow-y-auto border-r border-border p-2">
-          <TokenList />
+        <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border p-2">
+          <AddToken />
+          <div className="pt-2">
+            <TokenList />
+          </div>
         </aside>
         <section className="w-96 shrink-0 overflow-y-auto border-r border-border p-6">
           <TokenEditor />
