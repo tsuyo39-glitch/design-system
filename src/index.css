@@ -1,1 +1,22 @@
 @import "tailwindcss";
+@import "./styles/tokens.css";
+
+/*
+ * アプリ chrome 用の Tailwind theme マッピング。
+ * inline を付けることで値を var() 参照のまま残し、[data-mode="dark"] による
+ * カスケード上書き（tokens.css）が Tailwind ユーティリティにも効くようにする。
+ */
+@theme inline {
+  --color-canvas: var(--semantic-color-bg-canvas);
+  --color-surface: var(--semantic-color-bg-surface);
+  --color-ink: var(--semantic-color-text-primary);
+  --color-ink-muted: var(--semantic-color-text-secondary);
+  --color-accent: var(--semantic-color-action-default);
+  --color-accent-hover: var(--semantic-color-action-hover);
+  --color-on-accent: var(--semantic-color-text-onAccent);
+  --color-border: var(--semantic-color-border-default);
+}
+
+body {
+  font-family: var(--fontFamily-sans);
+}

@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run",
+    "tokens:build": "tsx scripts/build-tokens.ts"
   },
   "dependencies": {
     "react": "^19.2.7",
@@ -29,6 +30,7 @@
     "globals": "^17.7.0",
     "jsdom": "^29.1.1",
     "tailwindcss": "^4.3.2",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.62.1",
     "vite": "^8.1.3",
