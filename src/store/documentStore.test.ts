@@ -29,4 +29,25 @@ describe('useDocumentStore', () => {
     expect(() => useDocumentStore.getState().importDocument('{不正')).toThrow()
     expect(useDocumentStore.getState().document).toBe(before)
   })
+
+  it('select() で選択中のパスをストアに保持する', () => {
+    useDocumentStore.getState().select('semantic.color.action.default')
+    expect(useDocumentStore.getState().selectedPath).toBe('semantic.color.action.default')
+    useDocumentStore.getState().select(null)
+    expect(useDocumentStore.getState().selectedPath).toBeNull()
+  })
+
+  it('newDocument() / importDocument() / loadSample() で選択状態がリセットされる', () => {
+    useDocumentStore.getState().select('color')
+    useDocumentStore.getState().newDocument()
+    expect(useDocumentStore.getState().selectedPath).toBeNull()
+
+    useDocumentStore.getState().select('color')
+    useDocumentStore.getState().importDocument('{}')
+    expect(useDocumentStore.getState().selectedPath).toBeNull()
+
+    useDocumentStore.getState().select('color')
+    useDocumentStore.getState().loadSample()
+    expect(useDocumentStore.getState().selectedPath).toBeNull()
+  })
 })

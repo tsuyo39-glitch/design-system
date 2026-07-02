@@ -13,6 +13,7 @@
   --color-ink-muted: var(--semantic-color-text-secondary);
   --color-accent: var(--semantic-color-action-default);
   --color-accent-hover: var(--semantic-color-action-hover);
+  --color-accent-subtle: var(--semantic-color-action-subtle);
   --color-on-accent: var(--semantic-color-text-onAccent);
   --color-border: var(--semantic-color-border-default);
 }
