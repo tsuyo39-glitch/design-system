@@ -89,4 +89,25 @@ describe('useDocumentStore', () => {
     useDocumentStore.getState().removeNode('color.b')
     expect(useDocumentStore.getState().selectedPath).toBe('color.a')
   })
+
+  it('rename() で改名し、選択中パスを新パスへ付け替える', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.brand', 'color')
+    useDocumentStore.getState().select('color.brand')
+
+    useDocumentStore.getState().rename('color.brand', 'primary')
+    const state = useDocumentStore.getState()
+    expect(state.selectedPath).toBe('color.primary')
+    const doc = state.document as { color: { primary: { $value: string } } }
+    expect(doc.color.primary.$value).toBe('#000000')
+  })
+
+  it('rename() でグループを改名すると、選択中の子孫パスも付け替わる', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.indigo.500', 'color')
+    useDocumentStore.getState().select('color.indigo.500')
+
+    useDocumentStore.getState().rename('color.indigo', 'brand')
+    expect(useDocumentStore.getState().selectedPath).toBe('color.brand.500')
+  })
 })

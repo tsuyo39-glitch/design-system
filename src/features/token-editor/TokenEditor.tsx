@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { defaultValueFor } from '../../model/defaults'
-import type { TokenType } from '../../model/dtcg'
-import { getToken, resolveType } from '../../model/resolve'
+import { isToken, type TokenType } from '../../model/dtcg'
+import { findNode, getToken, resolveType } from '../../model/resolve'
 import { useDocumentStore } from '../../store/documentStore'
 
 const REF_PATTERN = /^\{(.+)\}$/
@@ -166,83 +166,153 @@ function LiteralInput({
   }
 }
 
-export function TokenEditor() {
-  const selectedPath = useDocumentStore((s) => s.selectedPath)
-  const document = useDocumentStore((s) => s.document)
-  const setValue = useDocumentStore((s) => s.setValue)
+/** 選択中ノードの改名。key={path} で remount して draft をリセットする前提。 */
+function RenameControl({ path }: { path: string }) {
+  const rename = useDocumentStore((s) => s.rename)
+  const currentName = path.split('.').at(-1) ?? ''
+  const [draft, setDraft] = useState(currentName)
+  const [error, setError] = useState<string | null>(null)
+
+  const submit = () => {
+    const next = draft.trim()
+    if (!next || next === currentName) return
+    try {
+      rename(path, next)
+      setError(null)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '改名できませんでした')
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-1">
+      <form
+        className="flex items-center gap-1"
+        onSubmit={(e) => {
+          e.preventDefault()
+          submit()
+        }}
+      >
+        <input
+          type="text"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          aria-label="名前"
+          className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
+        />
+        <button type="submit" className="rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface">
+          Rename
+        </button>
+      </form>
+      {error && <p className="text-xs text-error">{error}</p>}
+    </div>
+  )
+}
+
+/** トークン/グループ共通の削除 UI（インライン2段階確認）。 */
+function DeleteControl({ path, label }: { path: string; label: string }) {
   const removeNode = useDocumentStore((s) => s.removeNode)
-  // 削除の確認中パス。selectedPath と一致するときだけ確認 UI を出すので、別トークンを選ぶと自然に解除される。
-  const [confirmingPath, setConfirmingPath] = useState<string | null>(null)
+  const [confirming, setConfirming] = useState(false)
 
-  if (!selectedPath) {
-    return <p className="text-ink-muted">左のトークン一覧から選択してください。</p>
-  }
+  return (
+    <div className="border-t border-border pt-4">
+      {confirming ? (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-error">削除しますか？</span>
+          <button
+            type="button"
+            onClick={() => removeNode(path)}
+            className="rounded-md border border-error px-3 py-1 text-sm text-error hover:bg-surface"
+          >
+            削除する
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirming(false)}
+            className="rounded-md border border-border px-3 py-1 text-sm text-ink hover:bg-surface"
+          >
+            キャンセル
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          className="rounded-md border border-border px-3 py-1 text-sm text-ink-muted hover:bg-surface"
+        >
+          {label}
+        </button>
+      )}
+    </div>
+  )
+}
 
-  let value: unknown
-  let type: TokenType | '?'
-  try {
-    value = getToken(document, selectedPath).$value
-    type = resolveType(document, selectedPath)
-  } catch {
-    return <p className="text-ink-muted">このトークンは編集できません。</p>
-  }
-
+function TokenValueEditor({ path, type }: { path: string; type: TokenType | '?' }) {
+  const setValue = useDocumentStore((s) => s.setValue)
+  const value = getToken(useDocumentStore((s) => s.document), path).$value
   const referencing = isRef(value)
 
   return (
-    <div className="flex max-w-md flex-col gap-4">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="truncate font-mono text-sm text-ink">{selectedPath}</h2>
-        <span className="shrink-0 rounded border border-border px-1 font-mono text-xs text-ink-muted">{type}</span>
-      </div>
-
+    <>
       <label className="flex items-center gap-2 text-sm text-ink-muted">
         <input
           type="checkbox"
           checked={referencing}
-          onChange={() => setValue(selectedPath, referencing ? defaultLiteralFor(type) : '{}')}
+          onChange={() => setValue(path, referencing ? defaultLiteralFor(type) : '{}')}
         />
         参照として指定する
       </label>
 
       {referencing ? (
-        <RefInput value={value as string} onChange={(v) => setValue(selectedPath, v)} />
+        <RefInput value={value as string} onChange={(v) => setValue(path, v)} />
       ) : (
-        <LiteralInput type={type} value={value} onChange={(v) => setValue(selectedPath, v)} />
+        <LiteralInput type={type} value={value} onChange={(v) => setValue(path, v)} />
+      )}
+    </>
+  )
+}
+
+export function TokenEditor() {
+  const selectedPath = useDocumentStore((s) => s.selectedPath)
+  const document = useDocumentStore((s) => s.document)
+
+  if (!selectedPath) {
+    return <p className="text-ink-muted">左のトークン一覧から選択してください。</p>
+  }
+
+  let node: ReturnType<typeof findNode>
+  try {
+    node = findNode(document, selectedPath)
+  } catch {
+    return <p className="text-ink-muted">この項目は編集できません。</p>
+  }
+
+  const asToken = isToken(node)
+  let badge = 'group'
+  if (asToken) {
+    try {
+      badge = resolveType(document, selectedPath)
+    } catch {
+      badge = '?'
+    }
+  }
+
+  return (
+    <div className="flex max-w-md flex-col gap-4">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="truncate font-mono text-sm text-ink">{selectedPath}</h2>
+        <span className="shrink-0 rounded border border-border px-1 font-mono text-xs text-ink-muted">{badge}</span>
+      </div>
+
+      <RenameControl key={selectedPath} path={selectedPath} />
+
+      {asToken ? (
+        <TokenValueEditor path={selectedPath} type={badge as TokenType | '?'} />
+      ) : (
+        <p className="text-sm text-ink-muted">グループです。名前の変更と削除ができます。</p>
       )}
 
-      <div className="border-t border-border pt-4">
-        {confirmingPath === selectedPath ? (
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-error">削除しますか？</span>
-            <button
-              type="button"
-              onClick={() => {
-                removeNode(selectedPath)
-                setConfirmingPath(null)
-              }}
-              className="rounded-md border border-error px-3 py-1 text-sm text-error hover:bg-surface"
-            >
-              削除する
-            </button>
-            <button
-              type="button"
-              onClick={() => setConfirmingPath(null)}
-              className="rounded-md border border-border px-3 py-1 text-sm text-ink hover:bg-surface"
-            >
-              キャンセル
-            </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setConfirmingPath(selectedPath)}
-            className="rounded-md border border-border px-3 py-1 text-sm text-ink-muted hover:bg-surface"
-          >
-            このトークンを削除
-          </button>
-        )}
-      </div>
+      <DeleteControl path={selectedPath} label={asToken ? 'このトークンを削除' : 'このグループを削除'} />
     </div>
   )
 }

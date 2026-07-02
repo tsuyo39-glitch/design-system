@@ -72,9 +72,17 @@ function TokenRow({ path, node, doc, depth }: TokenRowProps) {
 
   return (
     <div>
-      <div style={indent} className="py-1 font-mono text-xs font-medium text-ink-muted">
+      <button
+        type="button"
+        aria-pressed={isSelected}
+        onClick={() => select(fullPath)}
+        style={indent}
+        className={`flex w-full items-center rounded-md py-1 pr-2 text-left font-mono text-xs font-medium text-ink-muted ${
+          isSelected ? 'bg-accent-subtle' : 'hover:bg-surface'
+        }`}
+      >
         {name}
-      </div>
+      </button>
       {children.map(([key, child]) => (
         <TokenRow key={key} path={[...path, key]} node={child as Group | Token} doc={doc} depth={depth + 1} />
       ))}

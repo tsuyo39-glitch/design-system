@@ -87,6 +87,11 @@ export function resolveType(doc: TokenDocument, path: string): TokenType {
   return inherited
 }
 
+/** パス上のノード（トークンまたはグループ）を取得する。トークン/グループの判別に使う。 */
+export function findNode(doc: TokenDocument, path: string): Group | Token {
+  return getNode(doc, path)
+}
+
 /** パス上のトークンを（解決せず）そのまま取得する。エディタが宣言値・参照有無を見るために使う。 */
 export function getToken(doc: TokenDocument, path: string): Token {
   const node = getNode(doc, path)
