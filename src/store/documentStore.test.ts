@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { useDocumentStore } from './documentStore'
+import { STORAGE_KEY, useDocumentStore } from './documentStore'
 
 describe('useDocumentStore', () => {
   beforeEach(() => {
@@ -109,5 +109,41 @@ describe('useDocumentStore', () => {
 
     useDocumentStore.getState().rename('color.indigo', 'brand')
     expect(useDocumentStore.getState().selectedPath).toBe('color.brand.500')
+  })
+})
+
+describe('useDocumentStore の永続化', () => {
+  const readStored = () => {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as { state: { document: unknown } }) : null
+  }
+
+  it('編集すると localStorage に document が保存される（選択状態は保存しない）', () => {
+    useDocumentStore.getState().newDocument()
+    useDocumentStore.getState().addToken('color.brand', 'color')
+    useDocumentStore.getState().select('color.brand')
+
+    const stored = readStored()!
+    expect(stored.state.document).toEqual({ color: { brand: { $value: '#000000', $type: 'color' } } })
+    expect(stored.state).not.toHaveProperty('selectedPath')
+  })
+
+  it('localStorage の内容から rehydrate で復元される', async () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ state: { document: { spacing: { $type: 'dimension', 4: { $value: '16px' } } } }, version: 1 }),
+    )
+    await useDocumentStore.persist.rehydrate()
+    expect(useDocumentStore.getState().document).toEqual({
+      spacing: { $type: 'dimension', 4: { $value: '16px' } },
+    })
+  })
+
+  it('壊れた保存値（配列）は無視して現在のドキュメントを保つ', async () => {
+    useDocumentStore.getState().loadSample()
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ state: { document: [] }, version: 1 }))
+    await useDocumentStore.persist.rehydrate()
+    expect(Array.isArray(useDocumentStore.getState().document)).toBe(false)
+    expect(useDocumentStore.getState().document).toHaveProperty('semantic')
   })
 })
