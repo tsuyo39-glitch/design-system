@@ -1,5 +1,4 @@
-import { hsvToHex, parseHexColor } from './color'
-import { parseHexBytes } from './codegen'
+import { hsvToHex, parseHexBytes, parseHexColor } from './color'
 
 /**
  * カラー三役の派生ロジック（純粋関数）。

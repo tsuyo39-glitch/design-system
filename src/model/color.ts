@@ -42,6 +42,19 @@ export function parseHexColor(value: string): { hsv: Hsv; alpha: string } | null
   }
 }
 
+/** "#RRGGBB" / "#RRGGBBAA" を 0-255 の各成分に分解する。非対応なら null。 */
+export function parseHexBytes(hex: string): { r: number; g: number; b: number; a: number } | null {
+  const match = HEX_PATTERN.exec(hex.trim())
+  if (!match) return null
+  const h = match[1]
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16),
+    a: match[2] ? parseInt(match[2], 16) : 255,
+  }
+}
+
 /** HSV を "#RRGGBB"（大文字）にする。 */
 export function hsvToHex({ h, s, v }: Hsv): string {
   const c = v * s

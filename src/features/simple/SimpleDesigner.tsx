@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { readableTextOn } from '../../model/palette'
 import { usePaletteStore, type Role } from '../../store/paletteStore'
-import { ColorWheel } from '../token-editor/ColorWheel'
+import { ColorWheel } from './ColorWheel'
 
 const ROLES: Array<{ id: Role; name: string; description: string; ratio: string }> = [
   { id: 'base', name: 'ベースカラー', description: '全体の基盤になる色。画面の大部分を占めます。', ratio: '75%' },

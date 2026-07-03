@@ -1,85 +1,40 @@
-import { useEffect, useRef, useState } from 'react'
-import {
-  downloadCss,
-  downloadDocument,
-  downloadKotlin,
-  downloadResolvedJson,
-  downloadSwift,
-} from './features/export/exportDocument'
+import { useEffect, useState } from 'react'
+import { downloadDesignCss, downloadDesignJson, type Design } from './features/export/designExport'
+import { FontDesigner } from './features/font/FontDesigner'
+import { LayoutDesigner } from './features/layout/LayoutDesigner'
 import { SimpleDesigner } from './features/simple/SimpleDesigner'
-import { TokenEditor } from './features/token-editor/TokenEditor'
-import { AddToken } from './features/token-list/AddToken'
-import { TokenList } from './features/token-list/TokenList'
-import { Preview } from './features/preview/Preview'
-import type { Mode } from './model/resolve'
-import { useDocumentStore } from './store/documentStore'
+import { useFontStore } from './store/fontStore'
+import { RADIUS_PX, SPACING_PX, useLayoutStore } from './store/layoutStore'
+import { usePaletteStore } from './store/paletteStore'
 
-type Tab = 'simple' | 'detail' | 'io'
+type Mode = 'light' | 'dark'
+type Tab = 'color' | 'font' | 'layout' | 'io'
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'simple', label: 'シンプル' },
-  { id: 'detail', label: '詳細' },
+  { id: 'color', label: 'カラー' },
+  { id: 'font', label: 'フォント' },
+  { id: 'layout', label: 'レイアウト' },
   { id: 'io', label: '入出力' },
 ]
 
 const secondaryButton = 'rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface'
-// disabled 時は opacity で薄めず、muted 文字色 + hover 無効にする（design-principles §3）。
-const historyButton =
-  'rounded-md border border-border px-3 py-2 text-sm enabled:text-ink enabled:hover:bg-surface disabled:cursor-default disabled:text-ink-muted'
 
 function App() {
   const [mode, setMode] = useState<Mode>('light')
-  const [tab, setTab] = useState<Tab>('simple')
-  const [importError, setImportError] = useState<string | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const importDocument = useDocumentStore((s) => s.importDocument)
-  const newDocument = useDocumentStore((s) => s.newDocument)
-  const loadSample = useDocumentStore((s) => s.loadSample)
-  const undo = useDocumentStore((s) => s.undo)
-  const redo = useDocumentStore((s) => s.redo)
-  const canUndo = useDocumentStore((s) => s.past.length > 0)
-  const canRedo = useDocumentStore((s) => s.future.length > 0)
+  const [tab, setTab] = useState<Tab>('color')
+
+  const palette = usePaletteStore()
+  const font = useFontStore()
+  const layout = useLayoutStore()
 
   useEffect(() => {
     document.documentElement.dataset.mode = mode
   }, [mode])
 
-  // Cmd/Ctrl+Z で undo、Shift 付きで redo。入力中はブラウザ既定（フィールドの undo）に任せる。
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return
-      const target = e.target as HTMLElement
-      if (
-        target.isContentEditable ||
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT'
-      ) {
-        return
-      }
-      e.preventDefault()
-      if (e.shiftKey) redo()
-      else undo()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [undo, redo])
-
-  // 読込系の操作後は結果が見える詳細タブへ移す。
-  const loadThenEdit = (load: () => void) => {
-    load()
-    setImportError(null)
-    setTab('detail')
-  }
-
-  const handleImportFile = async (file: File) => {
-    try {
-      importDocument(await file.text())
-      setImportError(null)
-      setTab('detail')
-    } catch {
-      setImportError(`${file.name} を DTCG JSON として読み込めませんでした`)
-    }
+  const design: Design = {
+    color: { base: palette.base, main: palette.main, accent: palette.accent },
+    font: { heading: font.heading, body: font.body, baseSize: font.base },
+    layout: { spacing: SPACING_PX[layout.spacing], radius: RADIUS_PX[layout.radius] },
   }
 
   return (
@@ -107,151 +62,61 @@ function App() {
             )
           })}
         </nav>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={undo}
-            disabled={!canUndo}
-            title="元に戻す (Cmd/Ctrl+Z)"
-            className={historyButton}
-          >
-            元に戻す
-          </button>
-          <button
-            type="button"
-            onClick={redo}
-            disabled={!canRedo}
-            title="やり直す (Cmd/Ctrl+Shift+Z)"
-            className={historyButton}
-          >
-            やり直す
-          </button>
-          <button
-            type="button"
-            onClick={() => setMode((current) => (current === 'light' ? 'dark' : 'light'))}
-            className={secondaryButton}
-          >
-            {mode === 'light' ? 'ダークモード' : 'ライトモード'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setMode((current) => (current === 'light' ? 'dark' : 'light'))}
+          className={secondaryButton}
+        >
+          {mode === 'light' ? 'ダークモード' : 'ライトモード'}
+        </button>
       </header>
 
-      {tab === 'simple' && (
+      {tab === 'color' && (
         <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
           <SimpleDesigner />
         </div>
       )}
 
-      {tab === 'detail' && (
-        <div role="tabpanel" className="flex flex-1 overflow-hidden">
-          <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border p-2">
-            <AddToken />
-            <div className="pt-2">
-              <TokenList />
-            </div>
-          </aside>
-          <section className="w-96 shrink-0 overflow-y-auto border-r border-border p-6">
-            <TokenEditor />
-          </section>
-          <main className="flex-1 overflow-y-auto p-6">
-            <Preview mode={mode} />
-          </main>
+      {tab === 'font' && (
+        <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
+          <FontDesigner />
+        </div>
+      )}
+
+      {tab === 'layout' && (
+        <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
+          <LayoutDesigner />
         </div>
       )}
 
       {tab === 'io' && (
         <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto flex max-w-lg flex-col gap-8">
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xs font-medium uppercase text-ink-muted">ドキュメント</h2>
-              <div className="flex flex-wrap gap-2">
-                <button type="button" onClick={() => loadThenEdit(newDocument)} className={secondaryButton}>
-                  空から新規
-                </button>
-                <button type="button" onClick={() => loadThenEdit(loadSample)} className={secondaryButton}>
-                  サンプルを読込
-                </button>
-                <button type="button" onClick={() => fileInputRef.current?.click()} className={secondaryButton}>
-                  JSON を読み込む
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json,application/json"
-                  aria-label="DTCG JSON を import"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0]
-                    if (file) void handleImportFile(file)
-                    e.target.value = ''
-                  }}
-                />
-              </div>
-              {importError && <p className="text-sm text-error">{importError}</p>}
-            </section>
-
-            <section className="flex flex-col gap-2">
-              <h2 className="text-xs font-medium uppercase text-ink-muted">エクスポート</h2>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => downloadDocument(useDocumentStore.getState().document)}
-                  className="rounded-md bg-accent px-3 py-2 text-sm text-on-accent hover:bg-accent-hover"
-                >
-                  DTCG JSON
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadCss(useDocumentStore.getState().document)}
-                  className={secondaryButton}
-                >
-                  CSS 変数
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadResolvedJson(useDocumentStore.getState().document)}
-                  className={secondaryButton}
-                >
-                  解決済み JSON
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadSwift(useDocumentStore.getState().document)}
-                  className={secondaryButton}
-                >
-                  Swift
-                </button>
-                <button
-                  type="button"
-                  onClick={() => downloadKotlin(useDocumentStore.getState().document)}
-                  className={secondaryButton}
-                >
-                  Kotlin
-                </button>
-              </div>
-              <ul className="flex flex-col gap-1 text-sm text-ink-muted">
-                <li>
-                  <span className="text-ink">DTCG JSON</span> … 参照を残した編集用フォーマット。
-                </li>
-                <li>
-                  <span className="text-ink">CSS 変数</span> … 解決済みカスタムプロパティ（
-                  <span className="font-mono">:root</span> と{' '}
-                  <span className="font-mono">[data-mode=&quot;dark&quot;]</span>）。
-                </li>
-                <li>
-                  <span className="text-ink">解決済み JSON</span> … 参照と light/dark を解決した{' '}
-                  <span className="font-mono">{'{ light, dark }'}</span> の木。
-                </li>
-                <li>
-                  <span className="text-ink">Swift</span> … color トークンの SwiftUI{' '}
-                  <span className="font-mono">Color</span> 拡張（light）。
-                </li>
-                <li>
-                  <span className="text-ink">Kotlin</span> … color トークンの Jetpack Compose{' '}
-                  <span className="font-mono">Color</span> 定数（light）。
-                </li>
-              </ul>
-            </section>
+          <div className="mx-auto flex max-w-lg flex-col gap-3">
+            <h2 className="text-lg font-semibold">書き出し</h2>
+            <p className="text-sm text-ink-muted">
+              カラー・フォント・レイアウトで作った内容をまとめて書き出します。
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => downloadDesignCss(design)}
+                className="rounded-md bg-accent px-3 py-2 text-sm text-on-accent hover:bg-accent-hover"
+              >
+                CSS 変数
+              </button>
+              <button type="button" onClick={() => downloadDesignJson(design)} className={secondaryButton}>
+                JSON
+              </button>
+            </div>
+            <ul className="flex flex-col gap-1 text-sm text-ink-muted">
+              <li>
+                <span className="text-ink">CSS 変数</span> …{' '}
+                <span className="font-mono">:root</span> のカスタムプロパティ（色・フォント・余白・角丸）。
+              </li>
+              <li>
+                <span className="text-ink">JSON</span> … 同じ内容を構造化データで。
+              </li>
+            </ul>
           </div>
         </div>
       )}
