@@ -1,6 +1,6 @@
 import type { Group, Token, TokenDocument } from '../../model/dtcg'
 import { isMetaKey, isToken } from '../../model/dtcg'
-import { resolveToken, resolveType } from '../../model/resolve'
+import { checkToken, describeIssue, resolveToken, resolveType } from '../../model/resolve'
 import { useDocumentStore } from '../../store/documentStore'
 
 function describeValue(value: unknown): string {
@@ -40,6 +40,7 @@ function TokenRow({ path, node, doc, depth }: TokenRowProps) {
       type = '?'
     }
     const swatch = type === 'color' ? swatchColor(doc, fullPath) : undefined
+    const issue = checkToken(doc, fullPath)
 
     return (
       <button
@@ -58,6 +59,15 @@ function TokenRow({ path, node, doc, depth }: TokenRowProps) {
           />
         )}
         <span className="truncate font-mono">{name}</span>
+        {issue && (
+          <span
+            title={describeIssue(issue)}
+            aria-label={`エラー: ${describeIssue(issue)}`}
+            className="shrink-0 font-mono text-xs text-error"
+          >
+            ⚠
+          </span>
+        )}
         <span className="ml-auto shrink-0 rounded border border-border px-1 font-mono text-xs text-ink-muted">
           {type}
         </span>

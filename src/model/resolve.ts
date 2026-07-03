@@ -2,6 +2,19 @@ import { isToken, type Group, type Token, type TokenDocument, type TokenType } f
 
 export type Mode = 'light' | 'dark'
 
+/** 参照解決の失敗種別。UI がエラー表示を出し分けるために使う。 */
+export type ResolveErrorKind = 'circular' | 'missing' | 'group'
+
+export class ResolveError extends Error {
+  constructor(
+    public kind: ResolveErrorKind,
+    message: string,
+  ) {
+    super(message)
+    this.name = 'ResolveError'
+  }
+}
+
 /** own プロパティのみを見る。プロトタイプ由来のキー（toString 等）を経路として誤解決しないため。 */
 function hasOwn(obj: object, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(obj, key)
@@ -11,7 +24,7 @@ function getNode(doc: TokenDocument, path: string): Group | Token {
   let cursor: Group | Token = doc
   for (const key of path.split('.')) {
     if (isToken(cursor) || !hasOwn(cursor, key)) {
-      throw new Error(`トークンが見つかりません: ${path}`)
+      throw new ResolveError('missing', `トークンが見つかりません: ${path}`)
     }
     cursor = cursor[key] as Group | Token
   }
@@ -35,12 +48,12 @@ function resolveDeep(value: unknown, doc: TokenDocument, mode: Mode, seen: reado
 
     const refPath = match[1]
     if (seen.includes(refPath)) {
-      throw new Error(`循環参照を検出しました: ${[...seen, refPath].join(' -> ')}`)
+      throw new ResolveError('circular', `循環参照を検出しました: ${[...seen, refPath].join(' -> ')}`)
     }
 
     const node = getNode(doc, refPath)
     if (!isToken(node)) {
-      throw new Error(`グループは参照できません: {${refPath}}`)
+      throw new ResolveError('group', `グループは参照できません: {${refPath}}`)
     }
     return resolveDeep(pickValue(node, mode), doc, mode, [...seen, refPath])
   }
@@ -90,6 +103,40 @@ export function resolveType(doc: TokenDocument, path: string): TokenType {
 /** パス上のノード（トークンまたはグループ）を取得する。トークン/グループの判別に使う。 */
 export function findNode(doc: TokenDocument, path: string): Group | Token {
   return getNode(doc, path)
+}
+
+export interface TokenIssue {
+  kind: ResolveErrorKind
+  message: string
+}
+
+/** 種別ごとの短い日本語ラベル。UI のエラー印・警告に使う。 */
+export function describeIssue(issue: TokenIssue): string {
+  switch (issue.kind) {
+    case 'circular':
+      return '循環参照'
+    case 'missing':
+      return '未解決の参照'
+    case 'group':
+      return '参照先がグループ'
+  }
+}
+
+/**
+ * トークンの解決を light/dark とも試し、壊れていれば理由を返す（壊れていなければ null）。
+ * 循環参照・未解決参照を握りつぶさず UI に出すための入口。
+ */
+export function checkToken(doc: TokenDocument, path: string): TokenIssue | null {
+  for (const mode of ['light', 'dark'] as const) {
+    try {
+      resolveToken(doc, path, mode)
+    } catch (error) {
+      if (error instanceof ResolveError) return { kind: error.kind, message: error.message }
+      // resolveToken への想定外の入力（グループ等）は参照の壊れとは別。ここでは無視。
+      return null
+    }
+  }
+  return null
 }
 
 /** パス上のトークンを（解決せず）そのまま取得する。エディタが宣言値・参照有無を見るために使う。 */

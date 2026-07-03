@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { defaultValueFor } from '../../model/defaults'
 import { isToken, type TokenType } from '../../model/dtcg'
-import { findNode, getToken, resolveType } from '../../model/resolve'
+import { checkToken, describeIssue, findNode, getToken, resolveType } from '../../model/resolve'
 import { useDocumentStore } from '../../store/documentStore'
 import { ColorWheel } from './ColorWheel'
 
@@ -360,8 +360,10 @@ function DeleteControl({ path, label }: { path: string; label: string }) {
 
 function TokenValueEditor({ path, type }: { path: string; type: TokenType | '?' }) {
   const setValue = useDocumentStore((s) => s.setValue)
-  const value = getToken(useDocumentStore((s) => s.document), path).$value
+  const document = useDocumentStore((s) => s.document)
+  const value = getToken(document, path).$value
   const referencing = isRef(value)
+  const issue = checkToken(document, path)
 
   return (
     <>
@@ -378,6 +380,12 @@ function TokenValueEditor({ path, type }: { path: string; type: TokenType | '?' 
         <RefInput value={value as string} onChange={(v) => setValue(path, v)} />
       ) : (
         <LiteralInput type={type} value={value} onChange={(v) => setValue(path, v)} />
+      )}
+
+      {issue && (
+        <p className="rounded-md border border-error px-3 py-2 text-sm text-error">
+          {describeIssue(issue)}: {issue.message}
+        </p>
       )}
     </>
   )

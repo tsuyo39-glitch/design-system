@@ -3,7 +3,15 @@ import { dirname, resolve as resolvePath } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import type { TokenDocument } from './dtcg'
-import { getToken, resolveRef, resolveToken, resolveType, setTokenValue } from './resolve'
+import {
+  checkToken,
+  describeIssue,
+  getToken,
+  resolveRef,
+  resolveToken,
+  resolveType,
+  setTokenValue,
+} from './resolve'
 
 describe('resolveToken', () => {
   it('参照を辿らず $value をそのまま返す', () => {
@@ -93,6 +101,57 @@ describe('resolveToken', () => {
     }
     expect(() => resolveToken(doc, 'color.toString')).toThrow(/見つかりません/)
     expect(() => resolveRef(doc, '{constructor}')).toThrow(/見つかりません/)
+  })
+})
+
+describe('checkToken', () => {
+  it('解決できるトークンは null（問題なし）', () => {
+    const doc: TokenDocument = {
+      color: { $type: 'color', a: { $value: '#000' }, b: { $value: '{color.a}' } },
+    }
+    expect(checkToken(doc, 'color.b')).toBeNull()
+  })
+
+  it('未解決の参照は kind="missing"', () => {
+    const doc: TokenDocument = { color: { $type: 'color', a: { $value: '{color.zzz}' } } }
+    expect(checkToken(doc, 'color.a')?.kind).toBe('missing')
+  })
+
+  it('循環参照は kind="circular"', () => {
+    const doc: TokenDocument = {
+      a: { $value: '{b}', $type: 'color' },
+      b: { $value: '{a}', $type: 'color' },
+    }
+    expect(checkToken(doc, 'a')?.kind).toBe('circular')
+  })
+
+  it('参照先がグループなら kind="group"', () => {
+    const doc: TokenDocument = {
+      color: { $type: 'color', ramp: { 500: { $value: '#000' } } },
+      alias: { $value: '{color.ramp}', $type: 'color' },
+    }
+    expect(checkToken(doc, 'alias')?.kind).toBe('group')
+  })
+
+  it('dark 側だけ壊れていても検出する', () => {
+    const doc: TokenDocument = {
+      color: {
+        $type: 'color',
+        a: {
+          $value: '#000',
+          $extensions: { 'com.tokens.mode': { dark: '{color.zzz}' } },
+        },
+      },
+    }
+    expect(checkToken(doc, 'color.a')?.kind).toBe('missing')
+  })
+})
+
+describe('describeIssue', () => {
+  it('種別ごとの日本語ラベルを返す', () => {
+    expect(describeIssue({ kind: 'circular', message: '' })).toBe('循環参照')
+    expect(describeIssue({ kind: 'missing', message: '' })).toBe('未解決の参照')
+    expect(describeIssue({ kind: 'group', message: '' })).toBe('参照先がグループ')
   })
 })
 

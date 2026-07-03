@@ -104,4 +104,28 @@ describe('TokenEditor', () => {
     }
     expect(doc.easing.standard.$value).toEqual([0.25, 1, 0.3, 1])
   })
+
+  it('参照先が存在しないトークンは、エディタに未解決の警告を出す', () => {
+    useDocumentStore.getState().importDocument(
+      JSON.stringify({ color: { $type: 'color', a: { $value: '{color.zzz}' } } }),
+    )
+    useDocumentStore.getState().select('color.a')
+    render(<TokenEditor />)
+    expect(screen.getByText(/未解決の参照/)).toBeInTheDocument()
+  })
+
+  it('壊れた参照を有効な参照に直すと警告が消える', () => {
+    useDocumentStore.getState().importDocument(
+      JSON.stringify({
+        color: { $type: 'color', ok: { $value: '#123456' }, a: { $value: '{color.zzz}' } },
+      }),
+    )
+    useDocumentStore.getState().select('color.a')
+    const { rerender } = render(<TokenEditor />)
+    expect(screen.getByText(/未解決の参照/)).toBeInTheDocument()
+
+    fireEvent.change(screen.getByDisplayValue('color.zzz'), { target: { value: 'color.ok' } })
+    rerender(<TokenEditor />)
+    expect(screen.queryByText(/未解決の参照/)).not.toBeInTheDocument()
+  })
 })
