@@ -6,6 +6,7 @@ import {
   downloadResolvedJson,
   downloadSwift,
 } from './features/export/exportDocument'
+import { SimpleDesigner } from './features/simple/SimpleDesigner'
 import { TokenEditor } from './features/token-editor/TokenEditor'
 import { AddToken } from './features/token-list/AddToken'
 import { TokenList } from './features/token-list/TokenList'
@@ -13,11 +14,11 @@ import { Preview } from './features/preview/Preview'
 import type { Mode } from './model/resolve'
 import { useDocumentStore } from './store/documentStore'
 
-type Tab = 'edit' | 'preview' | 'io'
+type Tab = 'simple' | 'detail' | 'io'
 
 const TABS: Array<{ id: Tab; label: string }> = [
-  { id: 'edit', label: '編集' },
-  { id: 'preview', label: 'プレビュー' },
+  { id: 'simple', label: 'シンプル' },
+  { id: 'detail', label: '詳細' },
   { id: 'io', label: '入出力' },
 ]
 
@@ -28,7 +29,7 @@ const historyButton =
 
 function App() {
   const [mode, setMode] = useState<Mode>('light')
-  const [tab, setTab] = useState<Tab>('edit')
+  const [tab, setTab] = useState<Tab>('simple')
   const [importError, setImportError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const importDocument = useDocumentStore((s) => s.importDocument)
@@ -64,18 +65,18 @@ function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [undo, redo])
 
-  // 読込系の操作後は結果が見える編集タブへ移す。
+  // 読込系の操作後は結果が見える詳細タブへ移す。
   const loadThenEdit = (load: () => void) => {
     load()
     setImportError(null)
-    setTab('edit')
+    setTab('detail')
   }
 
   const handleImportFile = async (file: File) => {
     try {
       importDocument(await file.text())
       setImportError(null)
-      setTab('edit')
+      setTab('detail')
     } catch {
       setImportError(`${file.name} を DTCG JSON として読み込めませんでした`)
     }
@@ -114,7 +115,7 @@ function App() {
             title="元に戻す (Cmd/Ctrl+Z)"
             className={historyButton}
           >
-            Undo
+            元に戻す
           </button>
           <button
             type="button"
@@ -123,19 +124,25 @@ function App() {
             title="やり直す (Cmd/Ctrl+Shift+Z)"
             className={historyButton}
           >
-            Redo
+            やり直す
           </button>
           <button
             type="button"
             onClick={() => setMode((current) => (current === 'light' ? 'dark' : 'light'))}
             className={secondaryButton}
           >
-            {mode === 'light' ? 'Dark mode' : 'Light mode'}
+            {mode === 'light' ? 'ダークモード' : 'ライトモード'}
           </button>
         </div>
       </header>
 
-      {tab === 'edit' && (
+      {tab === 'simple' && (
+        <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
+          <SimpleDesigner />
+        </div>
+      )}
+
+      {tab === 'detail' && (
         <div role="tabpanel" className="flex flex-1 overflow-hidden">
           <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border p-2">
             <AddToken />
@@ -143,17 +150,12 @@ function App() {
               <TokenList />
             </div>
           </aside>
-          <main className="flex-1 overflow-y-auto p-6">
+          <section className="w-96 shrink-0 overflow-y-auto border-r border-border p-6">
             <TokenEditor />
-          </main>
-        </div>
-      )}
-
-      {tab === 'preview' && (
-        <div role="tabpanel" className="flex-1 overflow-y-auto p-6">
-          <div className="mx-auto max-w-3xl">
+          </section>
+          <main className="flex-1 overflow-y-auto p-6">
             <Preview mode={mode} />
-          </div>
+          </main>
         </div>
       )}
 

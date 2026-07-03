@@ -64,7 +64,7 @@ export function AddToken() {
           ))}
         </select>
         <button type="submit" className="rounded-md border border-border px-2 py-1 text-sm text-ink hover:bg-surface">
-          Add
+          追加
         </button>
       </div>
       {error && <p className="text-xs text-error">{error}</p>}

@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { hsvToHex, parseHexColor, type Hsv } from './color'
+import { hsvToHex, parseHexColor, type Hsv } from '../../model/color'
 
 const WHEEL = 192
 const RING = 24

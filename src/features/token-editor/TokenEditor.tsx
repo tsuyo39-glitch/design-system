@@ -312,7 +312,7 @@ function RenameControl({ path }: { path: string }) {
           className="min-w-0 flex-1 rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
         />
         <button type="submit" className="rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface">
-          Rename
+          名前変更
         </button>
       </form>
       {error && <p className="text-xs text-error">{error}</p>}
