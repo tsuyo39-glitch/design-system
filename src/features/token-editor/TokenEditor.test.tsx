@@ -64,4 +64,44 @@ describe('TokenEditor', () => {
     }
     expect(doc.semantic.color.action.default.$value).toBe('#000000')
   })
+
+  it('typography トークンは raw JSON ではなくサブキーごとのフィールドで編集できる', () => {
+    useDocumentStore.getState().select('typography.body')
+    render(<TokenEditor />)
+    // サブキーがラベルとして並ぶ（raw JSON textarea ではない）
+    expect(screen.getByText('fontFamily')).toBeInTheDocument()
+    expect(screen.getByText('fontSize')).toBeInTheDocument()
+
+    const fontSize = screen.getByDisplayValue('{fontSize.base}')
+    fireEvent.change(fontSize, { target: { value: '{fontSize.md}' } })
+    const doc = useDocumentStore.getState().document as {
+      typography: { body: { $value: { fontSize: string; fontWeight: string } } }
+    }
+    expect(doc.typography.body.$value.fontSize).toBe('{fontSize.md}')
+    // 他のサブキーは保持される
+    expect(doc.typography.body.$value.fontWeight).toBe('{fontWeight.regular}')
+  })
+
+  it('shadow トークンの数値でないサブキー（色・寸法）は文字列のまま保持される', () => {
+    useDocumentStore.getState().select('shadow.sm')
+    render(<TokenEditor />)
+    const offsetY = screen.getByDisplayValue('1px')
+    fireEvent.change(offsetY, { target: { value: '2px' } })
+    const doc = useDocumentStore.getState().document as {
+      shadow: { sm: { $value: { offsetY: string; color: string } } }
+    }
+    expect(doc.shadow.sm.$value.offsetY).toBe('2px')
+    expect(doc.shadow.sm.$value.color).toBe('#0000000F')
+  })
+
+  it('cubicBezier トークンは 4 つの数値入力で編集できる', () => {
+    useDocumentStore.getState().select('easing.standard')
+    render(<TokenEditor />)
+    const x1 = screen.getByDisplayValue('0.16')
+    fireEvent.change(x1, { target: { value: '0.25' } })
+    const doc = useDocumentStore.getState().document as {
+      easing: { standard: { $value: number[] } }
+    }
+    expect(doc.easing.standard.$value).toEqual([0.25, 1, 0.3, 1])
+  })
 })

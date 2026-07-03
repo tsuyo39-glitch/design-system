@@ -20,6 +20,7 @@ export function defaultValueFor(type: TokenType): unknown {
     case 'shadow':
       return { color: '#00000000', offsetX: '0px', offsetY: '0px', blur: '0px', spread: '0px' }
     case 'typography':
-      return {}
+      // composite。空だと GUI 編集の足がかりが無いので標準サブキーを持たせる。
+      return { fontFamily: ['sans-serif'], fontSize: '16px', fontWeight: 400, lineHeight: 1.5 }
   }
 }

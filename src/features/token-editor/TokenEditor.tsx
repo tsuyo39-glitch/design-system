@@ -106,7 +106,100 @@ function FontWeightInput({ value, onChange }: { value: number; onChange: (value:
   )
 }
 
-/** color/dimension/fontFamily/fontWeight 以外の型は raw JSON で編集する（SPECIFICATION §3.3）。 */
+function NumberInput({ value, onChange }: { value: number; onChange: (value: number) => void }) {
+  return (
+    <input
+      type="number"
+      value={value}
+      onChange={(e) => onChange(Number(e.target.value))}
+      className="w-32 rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
+    />
+  )
+}
+
+function CubicBezierInput({
+  value,
+  onChange,
+}: {
+  value: [number, number, number, number]
+  onChange: (value: [number, number, number, number]) => void
+}) {
+  const labels = ['x1', 'y1', 'x2', 'y2']
+  return (
+    <div className="flex gap-2">
+      {value.map((n, i) => (
+        <label key={labels[i]} className="flex flex-col gap-1">
+          <span className="font-mono text-xs text-ink-muted">{labels[i]}</span>
+          <input
+            type="number"
+            step="0.01"
+            value={n}
+            onChange={(e) => {
+              const next = [...value] as [number, number, number, number]
+              next[i] = Number(e.target.value)
+              onChange(next)
+            }}
+            className="w-16 rounded-md border border-border bg-surface px-2 py-1 font-mono text-sm text-ink"
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+
+function displayComposite(sub: unknown): string {
+  if (typeof sub === 'string') return sub
+  if (typeof sub === 'number') return String(sub)
+  return JSON.stringify(sub)
+}
+
+/** composite のサブ値を、元の型・参照記法を尊重して解釈する。 */
+function parseComposite(input: string, original: unknown): unknown {
+  if (REF_PATTERN.test(input.trim())) return input // {ref} はそのまま文字列
+  if (typeof original === 'number') {
+    const n = Number(input)
+    return input.trim() !== '' && Number.isFinite(n) ? n : input
+  }
+  if (Array.isArray(original)) {
+    try {
+      return JSON.parse(input)
+    } catch {
+      return input
+    }
+  }
+  return input
+}
+
+/** typography / shadow など object 値を、キーごとのラベル付き入力で編集する。 */
+function CompositeInput({
+  value,
+  onChange,
+}: {
+  value: Record<string, unknown>
+  onChange: (value: Record<string, unknown>) => void
+}) {
+  const entries = Object.entries(value)
+  if (entries.length === 0) {
+    return <RawJsonInput value={value} onChange={(v) => onChange(v as Record<string, unknown>)} />
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      {entries.map(([key, sub]) => (
+        <label key={key} className="flex flex-col gap-1">
+          <span className="font-mono text-xs text-ink-muted">{key}</span>
+          <input
+            type="text"
+            value={displayComposite(sub)}
+            onChange={(e) => onChange({ ...value, [key]: parseComposite(e.target.value, sub) })}
+            className="w-full rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
+          />
+        </label>
+      ))}
+    </div>
+  )
+}
+
+/** 想定外の形の値に対する保険。通常の型はすべて専用入力に振り分ける。 */
 function RawJsonInput({ value, onChange }: { value: unknown; onChange: (value: unknown) => void }) {
   const serialized = JSON.stringify(value)
   const [prevSerialized, setPrevSerialized] = useState(serialized)
@@ -157,11 +250,28 @@ function LiteralInput({
     case 'color':
       return <ColorInput value={typeof value === 'string' ? value : '#000000'} onChange={onChange} />
     case 'dimension':
+    case 'duration':
       return <DimensionInput value={typeof value === 'string' ? value : '0px'} onChange={onChange} />
     case 'fontFamily':
       return <FontFamilyInput value={Array.isArray(value) ? (value as string[]) : []} onChange={onChange} />
     case 'fontWeight':
       return <FontWeightInput value={typeof value === 'number' ? value : 400} onChange={onChange} />
+    case 'number':
+      return <NumberInput value={typeof value === 'number' ? value : 0} onChange={onChange} />
+    case 'cubicBezier':
+      return (
+        <CubicBezierInput
+          value={Array.isArray(value) ? (value as [number, number, number, number]) : [0, 0, 1, 1]}
+          onChange={onChange}
+        />
+      )
+    case 'shadow':
+    case 'typography':
+      return typeof value === 'object' && value !== null && !Array.isArray(value) ? (
+        <CompositeInput value={value as Record<string, unknown>} onChange={onChange} />
+      ) : (
+        <RawJsonInput value={value} onChange={onChange} />
+      )
     default:
       return <RawJsonInput value={value} onChange={onChange} />
   }
