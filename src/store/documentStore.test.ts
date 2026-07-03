@@ -112,6 +112,74 @@ describe('useDocumentStore', () => {
   })
 })
 
+describe('useDocumentStore の Undo/Redo', () => {
+  beforeEach(() => {
+    // 履歴も含めてクリーンな状態から始める。
+    useDocumentStore.setState({ document: {}, selectedPath: null, past: [], future: [], lastEditPath: null })
+  })
+
+  const valueAt = (path: string): unknown => {
+    const doc = useDocumentStore.getState().document as Record<string, Record<string, { $value: unknown }>>
+    const [g, k] = path.split('.')
+    return doc[g]?.[k]?.$value
+  }
+
+  it('undo で直前の変更を取り消し、redo でやり直す', () => {
+    const s = useDocumentStore.getState()
+    s.addToken('color.a', 'color')
+    useDocumentStore.getState().setValue('color.a', '#111111')
+    expect(valueAt('color.a')).toBe('#111111')
+
+    useDocumentStore.getState().undo()
+    expect(valueAt('color.a')).toBe('#000000')
+
+    useDocumentStore.getState().redo()
+    expect(valueAt('color.a')).toBe('#111111')
+  })
+
+  it('同一パスの連続編集（ドラッグ相当）は1回の undo でまとめて戻る', () => {
+    useDocumentStore.getState().addToken('color.a', 'color')
+    useDocumentStore.getState().select('color.a') // coalesce の区切り
+    useDocumentStore.getState().setValue('color.a', '#111111')
+    useDocumentStore.getState().setValue('color.a', '#222222')
+    useDocumentStore.getState().setValue('color.a', '#333333')
+    expect(valueAt('color.a')).toBe('#333333')
+
+    useDocumentStore.getState().undo()
+    // 3回の setValue が1履歴にまとまり、一気に編集前へ戻る
+    expect(valueAt('color.a')).toBe('#000000')
+  })
+
+  it('別パスへ移ってからの編集は別履歴になる', () => {
+    useDocumentStore.getState().addToken('color.a', 'color')
+    useDocumentStore.getState().addToken('color.b', 'color')
+    useDocumentStore.getState().setValue('color.a', '#111111')
+    useDocumentStore.getState().setValue('color.b', '#222222')
+
+    useDocumentStore.getState().undo()
+    expect(valueAt('color.b')).toBe('#000000')
+    expect(valueAt('color.a')).toBe('#111111')
+  })
+
+  it('undo で存在しなくなるトークンを選択中なら選択を外す', () => {
+    useDocumentStore.getState().addToken('color.a', 'color')
+    useDocumentStore.getState().select('color.a')
+    useDocumentStore.getState().undo() // addToken を取り消し → color.a が消える
+    expect(useDocumentStore.getState().selectedPath).toBeNull()
+    expect('color' in useDocumentStore.getState().document).toBe(false)
+  })
+
+  it('新しい編集をすると redo 履歴は捨てられる', () => {
+    useDocumentStore.getState().addToken('color.a', 'color')
+    useDocumentStore.getState().setValue('color.a', '#111111')
+    useDocumentStore.getState().undo()
+    useDocumentStore.getState().setValue('color.a', '#999999')
+    expect(useDocumentStore.getState().future.length).toBe(0)
+    useDocumentStore.getState().redo()
+    expect(valueAt('color.a')).toBe('#999999') // redo は効かない
+  })
+})
+
 describe('useDocumentStore の永続化', () => {
   const readStored = () => {
     const raw = localStorage.getItem(STORAGE_KEY)

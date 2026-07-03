@@ -22,6 +22,9 @@ const TABS: Array<{ id: Tab; label: string }> = [
 ]
 
 const secondaryButton = 'rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface'
+// disabled 時は opacity で薄めず、muted 文字色 + hover 無効にする（design-principles §3）。
+const historyButton =
+  'rounded-md border border-border px-3 py-2 text-sm enabled:text-ink enabled:hover:bg-surface disabled:cursor-default disabled:text-ink-muted'
 
 function App() {
   const [mode, setMode] = useState<Mode>('light')
@@ -31,10 +34,35 @@ function App() {
   const importDocument = useDocumentStore((s) => s.importDocument)
   const newDocument = useDocumentStore((s) => s.newDocument)
   const loadSample = useDocumentStore((s) => s.loadSample)
+  const undo = useDocumentStore((s) => s.undo)
+  const redo = useDocumentStore((s) => s.redo)
+  const canUndo = useDocumentStore((s) => s.past.length > 0)
+  const canRedo = useDocumentStore((s) => s.future.length > 0)
 
   useEffect(() => {
     document.documentElement.dataset.mode = mode
   }, [mode])
+
+  // Cmd/Ctrl+Z で undo、Shift 付きで redo。入力中はブラウザ既定（フィールドの undo）に任せる。
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z') return
+      const target = e.target as HTMLElement
+      if (
+        target.isContentEditable ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT'
+      ) {
+        return
+      }
+      e.preventDefault()
+      if (e.shiftKey) redo()
+      else undo()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [undo, redo])
 
   // 読込系の操作後は結果が見える編集タブへ移す。
   const loadThenEdit = (load: () => void) => {
@@ -78,13 +106,33 @@ function App() {
             )
           })}
         </nav>
-        <button
-          type="button"
-          onClick={() => setMode((current) => (current === 'light' ? 'dark' : 'light'))}
-          className={secondaryButton}
-        >
-          {mode === 'light' ? 'Dark mode' : 'Light mode'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={undo}
+            disabled={!canUndo}
+            title="元に戻す (Cmd/Ctrl+Z)"
+            className={historyButton}
+          >
+            Undo
+          </button>
+          <button
+            type="button"
+            onClick={redo}
+            disabled={!canRedo}
+            title="やり直す (Cmd/Ctrl+Shift+Z)"
+            className={historyButton}
+          >
+            Redo
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode((current) => (current === 'light' ? 'dark' : 'light'))}
+            className={secondaryButton}
+          >
+            {mode === 'light' ? 'Dark mode' : 'Light mode'}
+          </button>
+        </div>
       </header>
 
       {tab === 'edit' && (
