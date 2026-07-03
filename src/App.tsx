@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   downloadCss,
   downloadDocument,
+  downloadKotlin,
   downloadResolvedJson,
   downloadSwift,
 } from './features/export/exportDocument'
@@ -170,6 +171,13 @@ function App() {
                 >
                   Swift
                 </button>
+                <button
+                  type="button"
+                  onClick={() => downloadKotlin(useDocumentStore.getState().document)}
+                  className={secondaryButton}
+                >
+                  Kotlin
+                </button>
               </div>
               <ul className="flex flex-col gap-1 text-sm text-ink-muted">
                 <li>
@@ -187,6 +195,10 @@ function App() {
                 <li>
                   <span className="text-ink">Swift</span> … color トークンの SwiftUI{' '}
                   <span className="font-mono">Color</span> 拡張（light）。
+                </li>
+                <li>
+                  <span className="text-ink">Kotlin</span> … color トークンの Jetpack Compose{' '}
+                  <span className="font-mono">Color</span> 定数（light）。
                 </li>
               </ul>
             </section>

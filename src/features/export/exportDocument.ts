@@ -1,6 +1,7 @@
 import type { TokenDocument } from '../../model/dtcg'
 import { serializeDocument } from '../../model/io'
 import { documentToCss } from '../../model/toCss'
+import { toKotlin } from '../../model/toKotlin'
 import { toResolvedJson } from '../../model/toResolvedJson'
 import { toSwift } from '../../model/toSwift'
 
@@ -32,4 +33,9 @@ export function downloadResolvedJson(doc: TokenDocument, filename = 'tokens.reso
 /** color トークンを SwiftUI Color 拡張としてダウンロードさせる。 */
 export function downloadSwift(doc: TokenDocument, filename = 'Tokens.swift'): void {
   downloadText(toSwift(doc), filename, 'text/plain')
+}
+
+/** color トークンを Jetpack Compose Color 定数としてダウンロードさせる。 */
+export function downloadKotlin(doc: TokenDocument, filename = 'DesignTokens.kt'): void {
+  downloadText(toKotlin(doc), filename, 'text/plain')
 }
