@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { downloadCss, downloadDocument } from './features/export/exportDocument'
+import {
+  downloadCss,
+  downloadDocument,
+  downloadResolvedJson,
+  downloadSwift,
+} from './features/export/exportDocument'
 import { TokenEditor } from './features/token-editor/TokenEditor'
 import { AddToken } from './features/token-list/AddToken'
 import { TokenList } from './features/token-list/TokenList'
@@ -151,11 +156,39 @@ function App() {
                 >
                   CSS 変数
                 </button>
+                <button
+                  type="button"
+                  onClick={() => downloadResolvedJson(useDocumentStore.getState().document)}
+                  className={secondaryButton}
+                >
+                  解決済み JSON
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadSwift(useDocumentStore.getState().document)}
+                  className={secondaryButton}
+                >
+                  Swift
+                </button>
               </div>
-              <p className="text-sm text-ink-muted">
-                CSS は解決済みのカスタムプロパティを <span className="font-mono">:root</span> と{' '}
-                <span className="font-mono">[data-mode=&quot;dark&quot;]</span> で書き出します。
-              </p>
+              <ul className="flex flex-col gap-1 text-sm text-ink-muted">
+                <li>
+                  <span className="text-ink">DTCG JSON</span> … 参照を残した編集用フォーマット。
+                </li>
+                <li>
+                  <span className="text-ink">CSS 変数</span> … 解決済みカスタムプロパティ（
+                  <span className="font-mono">:root</span> と{' '}
+                  <span className="font-mono">[data-mode=&quot;dark&quot;]</span>）。
+                </li>
+                <li>
+                  <span className="text-ink">解決済み JSON</span> … 参照と light/dark を解決した{' '}
+                  <span className="font-mono">{'{ light, dark }'}</span> の木。
+                </li>
+                <li>
+                  <span className="text-ink">Swift</span> … color トークンの SwiftUI{' '}
+                  <span className="font-mono">Color</span> 拡張（light）。
+                </li>
+              </ul>
             </section>
           </div>
         </div>
