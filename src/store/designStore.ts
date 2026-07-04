@@ -4,7 +4,8 @@ import { DEFAULT_TEMPLATE, type DesignSpec } from '../model/templates'
 
 export const DESIGN_STORAGE_KEY = 'ds-builder:design'
 
-export type ColorRole = 'primary' | 'accent'
+/** 自由に編集できる配色ロール（背景から全て）。 */
+export type ColorRole = 'background' | 'surface' | 'text' | 'primary' | 'accent'
 
 interface DesignState {
   /** 最後に適用したテンプレート。微調整しても表示の目印として残す。 */

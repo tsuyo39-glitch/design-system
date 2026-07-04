@@ -20,6 +20,14 @@ const RADIUS_PRESETS = [
   { label: '大', value: 16 },
 ]
 
+const COLOR_ROLES: Array<{ role: ColorRole; label: string }> = [
+  { role: 'background', label: '背景' },
+  { role: 'surface', label: '面' },
+  { role: 'text', label: '本文' },
+  { role: 'primary', label: 'プライマリ' },
+  { role: 'accent', label: 'アクセント' },
+]
+
 function Segmented({
   label,
   options,
@@ -114,25 +122,26 @@ export function Controls() {
         </div>
       </section>
 
-      {/* 微調整 */}
+      {/* 配色（全色を自由に編集） */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-semibold">微調整</h2>
+        <h2 className="text-sm font-semibold">配色</h2>
+        <p className="text-xs text-ink-muted">背景から全て、自由に編集できます。</p>
 
-        <div className="flex gap-2">
-          {(['primary', 'accent'] as ColorRole[]).map((role) => (
+        <div className="grid grid-cols-3 gap-2">
+          {COLOR_ROLES.map(({ role, label }) => (
             <button
               key={role}
               type="button"
               onClick={() => setColorRole(role)}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-md border py-1.5 text-sm ${
+              className={`flex items-center gap-1.5 rounded-md border px-2 py-1.5 text-xs ${
                 role === colorRole ? 'border-accent text-accent' : 'border-border text-ink hover:bg-surface'
               }`}
             >
               <span
-                className="h-4 w-4 rounded-full border border-border"
+                className="h-4 w-4 shrink-0 rounded-full border border-border"
                 style={{ backgroundColor: spec.colors[role] }}
               />
-              {role === 'primary' ? 'プライマリ' : 'アクセント'}
+              {label}
             </button>
           ))}
         </div>
@@ -145,7 +154,11 @@ export function Controls() {
           onChange={(e) => setColor(colorRole, e.target.value)}
           className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
         />
+      </section>
 
+      {/* 書体・サイズ */}
+      <section className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold">書体・サイズ</h2>
         <FontSelect label="見出しフォント" value={spec.fonts.heading} onChange={setHeading} />
         <FontSelect label="本文フォント" value={spec.fonts.body} onChange={setBody} />
 

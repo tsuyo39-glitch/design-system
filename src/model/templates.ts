@@ -36,18 +36,6 @@ const MONO = 'ui-monospace, SFMono-Regular, Menlo, "Noto Sans JP", monospace'
 
 export const TEMPLATES: Template[] = [
   {
-    id: 'claude',
-    name: 'クロード',
-    description: 'Claude 風。温かいアイボリーにクレイ色、明朝見出しの editorial な雰囲気。',
-    spec: {
-      colors: { background: '#F5F4EE', surface: '#FFFFFF', primary: '#D97757', accent: '#5C8A7B', text: '#2B2A27' },
-      fonts: { heading: SERIF, body: SANS },
-      sizeBase: 16,
-      spacing: 24,
-      radius: 8,
-    },
-  },
-  {
     id: 'minimal',
     name: 'ミニマル',
     description: '余白広めの静かな白基調。迷ったらこれ。',
