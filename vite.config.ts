@@ -7,6 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 // 本番ビルドのみ base を付ける。ローカル dev / preview は / のまま。
 export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/design-system/' : '/',
+  // PORT があればそれを使う（プレビュー環境が割り当てるポート）。既定は他プロジェクトと衝突しにくい値。
+  server: { port: Number(process.env.PORT) || 5273, strictPort: false },
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'jsdom',
