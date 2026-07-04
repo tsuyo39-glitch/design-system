@@ -1,34 +1,54 @@
+import { deriveSystem } from '../../model/system'
 import type { DesignSpec } from '../../model/templates'
 
-/** デザイン（テンプレート＋微調整の結果）を書き出す。 */
+/** デザイン（テンプレート＋微調整）を、意味づけされたトークン一式として書き出す。 */
 
 /** CSS カスタムプロパティとして書き出す。 */
 export function designToCss(spec: DesignSpec): string {
-  const { colors, fonts, sizeBase, spacing, radius } = spec
+  const s = deriveSystem(spec)
+  const { colors: c, type, fonts } = s
   return `:root {
-  --color-background: ${colors.background};
-  --color-surface: ${colors.surface};
-  --color-primary: ${colors.primary};
-  --color-accent: ${colors.accent};
-  --color-text: ${colors.text};
+  --color-background: ${c.background};
+  --color-surface: ${c.surface};
+  --color-text: ${c.text};
+  --color-text-muted: ${c.textMuted};
+  --color-border: ${c.border};
+  --color-primary: ${c.primary};
+  --color-primary-hover: ${c.primaryHover};
+  --color-primary-subtle: ${c.primarySubtle};
+  --color-on-primary: ${c.onPrimary};
+  --color-accent: ${c.accent};
+  --color-on-accent: ${c.onAccent};
   --font-heading: ${fonts.heading};
   --font-body: ${fonts.body};
-  --font-size-base: ${sizeBase}px;
-  --spacing: ${spacing}px;
-  --radius: ${radius}px;
+  --text-display: ${type.display}px;
+  --text-heading: ${type.heading}px;
+  --text-subheading: ${type.subheading}px;
+  --text-body: ${type.body}px;
+  --text-caption: ${type.caption}px;
+  --spacing: ${s.spacing}px;
+  --radius: ${s.radius}px;
 }
 `
 }
 
 /** JSON として書き出す。 */
 export function designToJson(spec: DesignSpec): string {
+  const s = deriveSystem(spec)
   return JSON.stringify(
     {
-      colors: spec.colors,
-      fonts: spec.fonts,
-      sizeBase: `${spec.sizeBase}px`,
-      spacing: `${spec.spacing}px`,
-      radius: `${spec.radius}px`,
+      colors: s.colors,
+      typography: {
+        heading: s.fonts.heading,
+        body: s.fonts.body,
+        display: `${s.type.display}px`,
+        heading_size: `${s.type.heading}px`,
+        subheading: `${s.type.subheading}px`,
+        body_size: `${s.type.body}px`,
+        caption: `${s.type.caption}px`,
+      },
+      spacing: `${s.spacing}px`,
+      radius: `${s.radius}px`,
     },
     null,
     2,

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Controls } from './features/design/Controls'
-import { DesignPreview } from './features/design/DesignPreview'
+import { SystemShowcase } from './features/design/SystemShowcase'
 import { downloadDesignCss, downloadDesignJson } from './features/export/designExport'
 import { useDesignStore } from './store/designStore'
 
@@ -57,8 +57,8 @@ function App() {
           <Controls />
         </aside>
         <main className="flex-1 overflow-y-auto bg-surface p-8">
-          <div className="mx-auto max-w-3xl">
-            <DesignPreview spec={spec} />
+          <div className="mx-auto max-w-4xl">
+            <SystemShowcase spec={spec} />
           </div>
         </main>
       </div>

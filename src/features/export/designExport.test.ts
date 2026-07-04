@@ -11,24 +11,28 @@ const spec: DesignSpec = {
 }
 
 describe('designToCss', () => {
-  it('デザインを CSS カスタムプロパティにする', () => {
+  it('派生した意味的トークンを CSS カスタムプロパティにする', () => {
     const css = designToCss(spec)
     expect(css).toContain('--color-background: #FFFFFF;')
     expect(css).toContain('--color-primary: #111827;')
     expect(css).toContain('--color-accent: #6366F1;')
-    expect(css).toContain('--font-heading: Inter, sans-serif;')
-    expect(css).toContain('--font-size-base: 16px;')
+    // 派生トークンも含む
+    expect(css).toContain('--color-text-muted:')
+    expect(css).toContain('--color-on-primary:')
+    expect(css).toContain('--color-primary-subtle:')
+    expect(css).toContain('--text-display:')
     expect(css).toContain('--spacing: 20px;')
     expect(css).toContain('--radius: 8px;')
   })
 })
 
 describe('designToJson', () => {
-  it('色・フォント・寸法を JSON にする（px 付き）', () => {
+  it('色・タイポ・寸法を JSON にする（派生トークン込み）', () => {
     const json = JSON.parse(designToJson(spec))
     expect(json.colors.primary).toBe('#111827')
-    expect(json.fonts.body).toBe('Georgia, serif')
-    expect(json.sizeBase).toBe('16px')
+    expect(json.colors.onPrimary).toBeDefined()
+    expect(json.typography.body).toBe('Georgia, serif')
+    expect(json.typography.display).toMatch(/px$/)
     expect(json.radius).toBe('8px')
   })
 })
