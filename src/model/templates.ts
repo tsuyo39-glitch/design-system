@@ -29,10 +29,25 @@ export interface Template {
   spec: DesignSpec
 }
 
+// システムフォント（ダウンロード不要の安全な既定）
 const SANS = 'system-ui, -apple-system, "Segoe UI", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif'
 const SERIF = 'Georgia, "Times New Roman", "Hiragino Mincho ProN", "Noto Serif JP", serif'
 const ROUNDED = '"Hiragino Maru Gothic ProN", "Quicksand", system-ui, "Noto Sans JP", sans-serif'
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, "Noto Sans JP", monospace'
+
+// デザイナー定番の Web フォント（index.html で読み込み）。欧文フォントには日本語フォールバックを付ける。
+const INTER = 'Inter, "Noto Sans JP", sans-serif'
+const POPPINS = 'Poppins, "Noto Sans JP", sans-serif'
+const MONTSERRAT = 'Montserrat, "Noto Sans JP", sans-serif'
+const SPACE_GROTESK = '"Space Grotesk", "Noto Sans JP", sans-serif'
+const NOTO_SANS_JP = '"Noto Sans JP", sans-serif'
+const PLAYFAIR = '"Playfair Display", "Noto Serif JP", serif'
+const LORA = 'Lora, "Noto Serif JP", serif'
+const ROBOTO_SLAB = '"Roboto Slab", "Noto Serif JP", serif'
+const NOTO_SERIF_JP = '"Noto Serif JP", serif'
+const MPLUS_ROUNDED = '"M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", sans-serif'
+const ZEN_MARU = '"Zen Maru Gothic", "Hiragino Maru Gothic ProN", sans-serif'
+const JETBRAINS = '"JetBrains Mono", ui-monospace, monospace'
 
 export const TEMPLATES: Template[] = [
   {
@@ -111,10 +126,26 @@ export const TEMPLATES: Template[] = [
 
 export const DEFAULT_TEMPLATE = TEMPLATES[0]
 
-/** 微調整で選べるフォント。 */
+/** 微調整で選べるフォント。上からゴシック→明朝→まる→等幅の順。 */
 export const FONT_CHOICES: Array<{ label: string; value: string }> = [
-  { label: 'ゴシック体', value: SANS },
-  { label: '明朝体', value: SERIF },
-  { label: 'まるゴシック', value: ROUNDED },
-  { label: '等幅', value: MONO },
+  // ゴシック体（サンセリフ）
+  { label: 'ゴシック体（システム）', value: SANS },
+  { label: 'Inter', value: INTER },
+  { label: 'Poppins', value: POPPINS },
+  { label: 'Montserrat', value: MONTSERRAT },
+  { label: 'Space Grotesk', value: SPACE_GROTESK },
+  { label: 'Noto Sans JP', value: NOTO_SANS_JP },
+  // 明朝体（セリフ）
+  { label: '明朝体（システム）', value: SERIF },
+  { label: 'Playfair Display', value: PLAYFAIR },
+  { label: 'Lora', value: LORA },
+  { label: 'Roboto Slab', value: ROBOTO_SLAB },
+  { label: 'Noto Serif JP', value: NOTO_SERIF_JP },
+  // まるゴシック
+  { label: 'まるゴシック（システム）', value: ROUNDED },
+  { label: 'M PLUS Rounded 1c', value: MPLUS_ROUNDED },
+  { label: 'Zen Maru Gothic', value: ZEN_MARU },
+  // 等幅
+  { label: '等幅（システム）', value: MONO },
+  { label: 'JetBrains Mono', value: JETBRAINS },
 ]
