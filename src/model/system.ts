@@ -28,6 +28,15 @@ export function darken(hex: string, amount: number): string {
   return hsvToHex({ ...parsed.hsv, v: Math.max(0, parsed.hsv.v - amount) })
 }
 
+/**
+ * 背景色から相性の良い面(surface)色を作る。
+ * 暗い背景は少し明るく（カードが浮く）、明るい背景は白に寄せる（オフホワイトでも自然な段差）。
+ */
+export function deriveSurface(background: string): string {
+  const dark = readableTextOn(background) === '#FFFFFF'
+  return dark ? mix(background, '#FFFFFF', 0.08) : mix(background, '#FFFFFF', 0.55)
+}
+
 export interface SystemColors {
   background: string
   surface: string

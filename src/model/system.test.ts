@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { darken, deriveSystem, mix } from './system'
+import { darken, deriveSurface, deriveSystem, mix } from './system'
 import type { DesignSpec } from './templates'
 
 const spec: DesignSpec = {
@@ -23,6 +23,23 @@ describe('mix', () => {
 describe('darken', () => {
   it('明度を下げる', () => {
     expect(darken('#FFFFFF', 0.2)).toBe('#CCCCCC')
+  })
+})
+
+describe('deriveSurface', () => {
+  it('暗い背景では少し明るい面色を作る', () => {
+    const bg = '#0B1120'
+    const surface = deriveSurface(bg)
+    expect(surface).not.toBe(bg)
+    // 明るくなっている（各成分が増える）
+    expect(parseInt(surface.slice(1, 3), 16)).toBeGreaterThan(0x0b)
+  })
+
+  it('明るい背景では白に寄せる', () => {
+    const surface = deriveSurface('#F5F4EE')
+    expect(surface).not.toBe('#F5F4EE')
+    // より白に近い
+    expect(parseInt(surface.slice(1, 3), 16)).toBeGreaterThanOrEqual(0xf5)
   })
 })
 

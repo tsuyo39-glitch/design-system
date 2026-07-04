@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { deriveSurface } from '../../model/system'
 import { FONT_CHOICES, TEMPLATES } from '../../model/templates'
 import { useDesignStore, type ColorRole } from '../../store/designStore'
 import { ColorWheel } from './ColorWheel'
@@ -154,6 +155,14 @@ export function Controls() {
           onChange={(e) => setColor(colorRole, e.target.value)}
           className="rounded-md border border-border bg-surface px-3 py-2 font-mono text-sm text-ink"
         />
+
+        <button
+          type="button"
+          onClick={() => setColor('surface', deriveSurface(spec.colors.background))}
+          className="rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface"
+        >
+          背景から面・ボーダーを生成
+        </button>
       </section>
 
       {/* 書体・サイズ */}
