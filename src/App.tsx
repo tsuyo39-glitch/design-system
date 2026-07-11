@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Controls } from './features/design/Controls'
 import { SystemShowcase } from './features/design/SystemShowcase'
-import { downloadDesignCss, downloadDesignJson } from './features/export/designExport'
+import { downloadDesignCss, downloadDesignJson, downloadDesignMarkdown } from './features/export/designExport'
 import { useDesignStore } from './store/designStore'
 
 const secondaryButton = 'rounded-md border border-border px-3 py-2 text-sm text-ink hover:bg-surface'
@@ -26,16 +26,17 @@ function App() {
             書き出し
           </button>
           {exportOpen && (
-            <div className="absolute right-0 z-10 mt-2 flex w-44 flex-col gap-2 rounded-md border border-border bg-canvas p-2 shadow-md">
+            <div className="absolute right-0 z-10 mt-2 flex w-60 flex-col gap-2 rounded-md border border-border bg-canvas p-2 shadow-md">
+              <p className="px-1 pt-1 text-xs text-ink-muted">AI エージェントに渡すなら design.md ＋ JSON</p>
               <button
                 type="button"
                 onClick={() => {
-                  downloadDesignCss(spec)
+                  downloadDesignMarkdown(spec)
                   setExportOpen(false)
                 }}
                 className={secondaryButton}
               >
-                CSS 変数
+                design.md（仕様書）
               </button>
               <button
                 type="button"
@@ -45,7 +46,17 @@ function App() {
                 }}
                 className={secondaryButton}
               >
-                JSON
+                design.json（値）
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  downloadDesignCss(spec)
+                  setExportOpen(false)
+                }}
+                className={secondaryButton}
+              >
+                design.css（Web 用）
               </button>
             </div>
           )}

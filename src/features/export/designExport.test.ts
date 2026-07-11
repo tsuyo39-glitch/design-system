@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { DesignSpec } from '../../model/templates'
-import { designToCss, designToJson } from './designExport'
+import { designToCss, designToJson, designToMarkdown } from './designExport'
 
 const spec: DesignSpec = {
   colors: { background: '#FFFFFF', surface: '#F7F8FA', primary: '#111827', accent: '#6366F1', text: '#111827' },
@@ -34,5 +34,21 @@ describe('designToJson', () => {
     expect(json.typography.body).toBe('Georgia, serif')
     expect(json.typography.display).toMatch(/px$/)
     expect(json.radius).toBe('8px')
+  })
+})
+
+describe('designToMarkdown', () => {
+  it('値と使い方のルールを持つ仕様書になる', () => {
+    const md = designToMarkdown(spec)
+    expect(md).toContain('# デザイン仕様')
+    // トークンの値と CSS 変数名が表に載る
+    expect(md).toContain('`--color-primary`')
+    expect(md).toContain('`#111827`')
+    // 使い方の原則（自然言語のルール）が含まれる
+    expect(md).toContain('使い方の原則')
+    expect(md).toContain('primary は主役')
+    // タイポ・寸法も記載
+    expect(md).toContain('20px')
+    expect(md).toContain('見出しフォント')
   })
 })
